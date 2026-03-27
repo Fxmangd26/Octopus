@@ -1,490 +1,539 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="description"
-        content="Deformable Neural Radiance Fields creates free-viewpoint portraits (nerfies) from casually captured videos.">
-  <meta name="keywords" content="Nerfies, D-NeRF, NeRF">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Nerfies: Deformable Neural Radiance Fields</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <title>Octopus: Continual Learning in MLLMs</title> -->
+    <title>Octopus: History-Free Gradient Orthogonalization for Continual Learning in Multimodal Large Language Models</title>
+    
+    <link rel="icon" type="image/x-icon" href="static/images/favicon.ico">
+    <link rel="apple-touch-icon" href="static/images/favicon.ico">
 
-  <!-- Global site tag (gtag.js) - Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PYVRSFMDRL"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
+    <!-- 现代干净字体 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- 图标与动效库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 
-    function gtag() {
-      dataLayer.push(arguments);
-    }
+    <style>
+        /* ================= 全局变量与核心色彩 ================= */
+        :root {
+            --bg-color: #ffffff;             
+            --bg-alt: #fcfcfc;              
+            --primary-color: #e07a5f;       
+            --primary-light: #f4a261;       
+            --primary-bg: rgba(224, 122, 95, 0.08); 
+            --text-main: #2b2d42;           
+            --text-muted: #6c757d;          
+            --border-color: #f1f3f5;
+            --shadow-soft: 0 16px 40px -10px rgba(0, 0, 0, 0.05);
+            --shadow-hover: 0 20px 40px -10px rgba(224, 122, 95, 0.15);
+        }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+            line-height: 1.7;
+        }
 
-    gtag('js', new Date());
+        h1, h2, h3, h4 { font-family: 'Outfit', sans-serif; font-weight: 700; color: #1a1b26; }
+        a { text-decoration: none; color: inherit; }
 
-    gtag('config', 'G-PYVRSFMDRL');
-  </script>
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        .section { padding: 90px 0; }
+        .bg-alt { background-color: var(--bg-alt); border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); }
 
-  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
-        rel="stylesheet">
+        /* ================= 高级轻盈卡片 ================= */
+        .glass-card {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: var(--shadow-soft);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            height: 100%; box-sizing: border-box;
+        }
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+            border-color: rgba(224, 122, 95, 0.3);
+        }
 
-  <link rel="stylesheet" href="./static/css/bulma.min.css">
-  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
-  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
-  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
-  <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
-  <link rel="stylesheet" href="./static/css/index.css">
-  <link rel="icon" href="./static/images/favicon.svg">
+        .highlight-text { color: var(--primary-color); font-weight: 600; }
 
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-  <script defer src="./static/js/fontawesome.all.min.js"></script>
-  <script src="./static/js/bulma-carousel.min.js"></script>
-  <script src="./static/js/bulma-slider.min.js"></script>
-  <script src="./static/js/index.js"></script>
+        /* ================= Hero 区域 ================= */
+        .hero { text-align: center; padding: 100px 0 60px; }
+        .hero h1 { font-size: 3rem; line-height: 1.25; margin-bottom: 25px; letter-spacing: -0.02em; }
+        
+        .title-icon {
+            height: 1.5em; 
+            width: auto;
+            vertical-align: middle;
+            margin-right: 5px;
+            margin-bottom: 8px; 
+        }
+        
+        .cvpr-badge {
+            display: inline-block;
+            background: rgba(224, 122, 95, 0.1);
+            color: var(--primary-color);
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 25px;
+            border: 1px solid rgba(224, 122, 95, 0.3);
+        }
+
+        .authors { font-size: 1.15rem; color: var(--text-muted); margin-bottom: 10px; }
+        .authors a { color: var(--text-main); font-weight: 500; transition: color 0.2s; }
+        .authors a:hover { color: var(--primary-color); }
+        .affiliations { font-size: 0.95rem; color: #868e96; margin-bottom: 40px; }
+
+        .btn-group { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-bottom: 60px; }
+        .btn {
+            display: flex; align-items: center; gap: 8px;
+            padding: 12px 28px;
+            border-radius: 100px;
+            background: #ffffff;
+            border: 1px solid #ced4da;
+            color: var(--text-main);
+            font-weight: 600;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            background: var(--primary-bg);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(224, 122, 95, 0.2);
+        }
+
+        /* ================= 视频容器 ================= */
+        .video-wrapper {
+            max-width: 900px; margin: 0 auto 80px;
+            border-radius: 16px; overflow: hidden;
+            box-shadow: var(--shadow-soft);
+            border: 1px solid var(--border-color);
+        }
+        video { width: 100%; height: auto; display: block; }
+
+        /* ================= 网格排版 ================= */
+        .content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: stretch; margin-bottom: 40px; }
+        .multi-img-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(45%, 1fr)); gap: 20px; margin-top: 30px;}
+        
+        .img-fluid { width: 100%; height: auto; border-radius: 12px; display: block; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid var(--border-color); }
+        .img-no-border { box-shadow: none; border: none; }
+        .caption { text-align: center; font-size: 0.85rem; color: var(--text-muted); margin-top: 10px; }
+
+        /* ================= 标题 ================= */
+        .section-title {
+            font-size: 2.2rem; text-align: center; margin-bottom: 50px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        /* ================= 选项卡 Tabs (Example Analysis) ================= */
+        .tabs-wrapper {
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: var(--shadow-soft);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+        .tab-buttons {
+            display: flex;
+            flex-wrap: wrap; 
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-alt);
+        }
+        .tab-button {
+            flex: 1; 
+            min-width: 150px;
+            background: transparent;
+            border: none;
+            padding: 18px 20px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Outfit', sans-serif;
+            text-align: center;
+        }
+        .tab-button:hover {
+            background: rgba(224, 122, 95, 0.05);
+            color: var(--text-main);
+        }
+        .tab-button.active {
+            background: #ffffff;
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--primary-color);
+        }
+        .tab-content {
+            display: none;
+            padding: 50px 40px;
+            text-align: center; /* 确保内部文字居中 */
+            animation: fadeIn 0.4s ease;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .tab-content h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.4rem;
+        }
+        .tab-content p {
+            margin-top: 0;
+            margin-bottom: 30px;
+            font-size: 1rem;
+            color: var(--text-muted);
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .tab-content img {
+            max-height: 500px;
+            width: auto;
+            margin: 0 auto; /* 确保图片居中 */
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ================= 代码框 ================= */
+        .terminal { background: #fafafa; border-radius: 12px; border: 1px solid #e5e7eb; overflow: hidden; margin-top: 20px; }
+        .terminal-header { background: #f3f4f6; padding: 12px 20px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #e5e7eb; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; }
+        .dot.red { background: #ff5f56; } .dot.yellow { background: #ffbd2e; } .dot.green { background: #27c93f; }
+        .terminal-body { padding: 20px; overflow-x: auto; color: #4b5563; font-family: 'Courier New', monospace; font-size: 0.95rem; text-align: left;}
+
+        blockquote {
+            background: var(--bg-alt);
+            border-left: 4px solid var(--primary-color);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+            font-style: italic;
+            color: var(--text-muted);
+        }
+
+        @media(max-width: 768px) {
+            .content-grid { grid-template-columns: 1fr; }
+            .hero h1 { font-size: 2.2rem; }
+            .glass-card { padding: 25px; }
+            .tab-button { min-width: 50%; border-bottom: 1px solid var(--border-color); }
+        }
+    </style>
 </head>
 <body>
 
-<nav class="navbar" role="navigation" aria-label="main navigation">
-  <div class="navbar-brand">
-    <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
-      <span aria-hidden="true"></span>
-      <span aria-hidden="true"></span>
-      <span aria-hidden="true"></span>
-    </a>
-  </div>
-  <div class="navbar-menu">
-    <div class="navbar-start" style="flex-grow: 1; justify-content: center;">
-      <a class="navbar-item" href="https://keunhong.com">
-      <span class="icon">
-          <i class="fas fa-home"></i>
-      </span>
-      </a>
-
-      <div class="navbar-item has-dropdown is-hoverable">
-        <a class="navbar-link">
-          More Research
-        </a>
-        <div class="navbar-dropdown">
-          <a class="navbar-item" href="https://hypernerf.github.io">
-            HyperNeRF
-          </a>
-          <a class="navbar-item" href="https://nerfies.github.io">
-            Nerfies
-          </a>
-          <a class="navbar-item" href="https://latentfusion.github.io">
-            LatentFusion
-          </a>
-          <a class="navbar-item" href="https://photoshape.github.io">
-            PhotoShape
-          </a>
-        </div>
-      </div>
-    </div>
-
-  </div>
-</nav>
-
-
-<section class="hero">
-  <div class="hero-body">
-    <div class="container is-max-desktop">
-      <div class="columns is-centered">
-        <div class="column has-text-centered">
-          <h1 class="title is-1 publication-title">Nerfies: Deformable Neural Radiance Fields</h1>
-          <div class="is-size-5 publication-authors">
-            <span class="author-block">
-              <a href="https://keunhong.com">Keunhong Park</a><sup>1</sup>,</span>
-            <span class="author-block">
-              <a href="https://utkarshsinha.com">Utkarsh Sinha</a><sup>2</sup>,</span>
-            <span class="author-block">
-              <a href="https://jonbarron.info">Jonathan T. Barron</a><sup>2</sup>,
-            </span>
-            <span class="author-block">
-              <a href="http://sofienbouaziz.com">Sofien Bouaziz</a><sup>2</sup>,
-            </span>
-            <span class="author-block">
-              <a href="https://www.danbgoldman.com">Dan B Goldman</a><sup>2</sup>,
-            </span>
-            <span class="author-block">
-              <a href="https://homes.cs.washington.edu/~seitz/">Steven M. Seitz</a><sup>1,2</sup>,
-            </span>
-            <span class="author-block">
-              <a href="http://www.ricardomartinbrualla.com">Ricardo Martin-Brualla</a><sup>2</sup>
-            </span>
-          </div>
-
-          <div class="is-size-5 publication-authors">
-            <span class="author-block"><sup>1</sup>University of Washington,</span>
-            <span class="author-block"><sup>2</sup>Google Research</span>
-          </div>
-
-          <div class="column has-text-centered">
-            <div class="publication-links">
-              <!-- PDF Link. -->
-              <span class="link-block">
-                <a href="https://arxiv.org/pdf/2011.12948"
-                   class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                      <i class="fas fa-file-pdf"></i>
-                  </span>
-                  <span>Paper</span>
-                </a>
-              </span>
-              <span class="link-block">
-                <a href="https://arxiv.org/abs/2011.12948"
-                   class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                      <i class="ai ai-arxiv"></i>
-                  </span>
-                  <span>arXiv</span>
-                </a>
-              </span>
-              <!-- Video Link. -->
-              <span class="link-block">
-                <a href="https://www.youtube.com/watch?v=MrKrnHhk8IA"
-                   class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                      <i class="fab fa-youtube"></i>
-                  </span>
-                  <span>Video</span>
-                </a>
-              </span>
-              <!-- Code Link. -->
-              <span class="link-block">
-                <a href="https://github.com/google/nerfies"
-                   class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                      <i class="fab fa-github"></i>
-                  </span>
-                  <span>Code</span>
-                  </a>
-              </span>
-              <!-- Dataset Link. -->
-              <span class="link-block">
-                <a href="https://github.com/google/nerfies/releases/tag/0.1"
-                   class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                      <i class="far fa-images"></i>
-                  </span>
-                  <span>Data</span>
-                  </a>
+    <!-- ================= HERO ================= -->
+    <section class="hero container">
+        <div data-aos="fade-down" data-aos-duration="1000">
+            <div class="cvpr-badge"><i class="fas fa-award"></i> Accepted to CVPR 2026</div>
+            
+            <h1>
+                <img src="static/images/icon.png" alt="Octopus Logo" class="title-icon">
+                Octopus: <span class="highlight-text">History-Free Gradient Orthogonalization</span><br>
+                for Continual Learning in MLLMs
+            </h1>
+            
+            <div class="authors">
+                <a href="https://openreview.net/profile?id=~Yuehao_Liu1">Yuehao Liu</a><sup>1</sup>, 
+                <a href="https://syguan96.github.io/">Shanyan Guan</a><sup>2</sup>, 
+                <a href="https://openreview.net/profile?id=~Weijia_Zhang7">Weijia Zhang</a><sup>1</sup>, 
+                <a href="https://openreview.net/profile?id=~Xuanming_Shang1">Xuanming Shang</a><sup>1</sup>, <br>
+                <a href="https://scholar.google.com/citations?user=h6tuBAcAAAAJ&hl=zh-CN&oi=ao">Yanhao Ge</a><sup>2</sup>, 
+                <a href="https://fxmangd.github.io/octopus-io/">Wei Li</a><sup>2</sup>, 
+                <a href="https://vision.sjtu.edu.cn/">Chao Ma</a><sup>1*</sup>
+            </div>
+            
+            <div class="affiliations">
+                <sup>1</sup> MoE Key Lab of Artificial Intelligence, AI Institute, Shanghai Jiao Tong University<br>
+                <sup>2</sup> vivo Mobile Communication Co., Ltd.
             </div>
 
-          </div>
+            <div class="btn-group">
+                <a href="#" class="btn"><i class="fas fa-file-pdf"></i> Paper</a>
+                <a href="#" class="btn"><i class="fas fa-code"></i> Code</a>
+                <a href="#" class="btn"><i class="fas fa-book"></i> arXiv</a>
+            </div>
         </div>
-      </div>
-    </div>
-  </div>
-</section>
 
-<section class="hero teaser">
-  <div class="container is-max-desktop">
-    <div class="hero-body">
-      <video id="teaser" autoplay muted loop playsinline height="100%">
-        <source src="./static/videos/teaser.mp4"
-                type="video/mp4">
-      </video>
-      <h2 class="subtitle has-text-centered">
-        <span class="dnerf">Nerfies</span> turns selfie videos from your phone into
-        free-viewpoint
-        portraits.
-      </h2>
-    </div>
-  </div>
-</section>
-
-
-<section class="hero is-light is-small">
-  <div class="hero-body">
-    <div class="container">
-      <div id="results-carousel" class="carousel results-carousel">
-        <div class="item item-steve">
-          <video poster="" id="steve" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/steve.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-        <div class="item item-chair-tp">
-          <video poster="" id="chair-tp" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/chair-tp.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-        <div class="item item-shiba">
-          <video poster="" id="shiba" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/shiba.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-        <div class="item item-fullbody">
-          <video poster="" id="fullbody" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/fullbody.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-        <div class="item item-blueshirt">
-          <video poster="" id="blueshirt" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/blueshirt.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-        <div class="item item-mask">
-          <video poster="" id="mask" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/mask.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-        <div class="item item-coffee">
-          <video poster="" id="coffee" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/coffee.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-        <div class="item item-toby">
-          <video poster="" id="toby" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/toby2.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-
-<section class="section">
-  <div class="container is-max-desktop">
-    <!-- Abstract. -->
-    <div class="columns is-centered has-text-centered">
-      <div class="column is-four-fifths">
-        <h2 class="title is-3">Abstract</h2>
-        <div class="content has-text-justified">
-          <p>
-            We present the first method capable of photorealistically reconstructing a non-rigidly
-            deforming scene using photos/videos captured casually from mobile phones.
-          </p>
-          <p>
-            Our approach augments neural radiance fields
-            (NeRF) by optimizing an
-            additional continuous volumetric deformation field that warps each observed point into a
-            canonical 5D NeRF.
-            We observe that these NeRF-like deformation fields are prone to local minima, and
-            propose a coarse-to-fine optimization method for coordinate-based models that allows for
-            more robust optimization.
-            By adapting principles from geometry processing and physical simulation to NeRF-like
-            models, we propose an elastic regularization of the deformation field that further
-            improves robustness.
-          </p>
-          <p>
-            We show that <span class="dnerf">Nerfies</span> can turn casually captured selfie
-            photos/videos into deformable NeRF
-            models that allow for photorealistic renderings of the subject from arbitrary
-            viewpoints, which we dub <i>"nerfies"</i>. We evaluate our method by collecting data
-            using a
-            rig with two mobile phones that take time-synchronized photos, yielding train/validation
-            images of the same pose at different viewpoints. We show that our method faithfully
-            reconstructs non-rigidly deforming scenes and reproduces unseen views with high
-            fidelity.
-          </p>
-        </div>
-      </div>
-    </div>
-    <!--/ Abstract. -->
-
-    <!-- Paper video. -->
-    <div class="columns is-centered has-text-centered">
-      <div class="column is-four-fifths">
-        <h2 class="title is-3">Video</h2>
-        <div class="publication-video">
-          <iframe src="https://www.youtube.com/embed/MrKrnHhk8IA?rel=0&amp;showinfo=0"
-                  frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-        </div>
-      </div>
-    </div>
-    <!--/ Paper video. -->
-  </div>
-</section>
-
-
-<section class="section">
-  <div class="container is-max-desktop">
-
-    <div class="columns is-centered">
-
-      <!-- Visual Effects. -->
-      <div class="column">
-        <div class="content">
-          <h2 class="title is-3">Visual Effects</h2>
-          <p>
-            Using <i>nerfies</i> you can create fun visual effects. This Dolly zoom effect
-            would be impossible without nerfies since it would require going through a wall.
-          </p>
-          <video id="dollyzoom" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/dollyzoom-stacked.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-      </div>
-      <!--/ Visual Effects. -->
-
-      <!-- Matting. -->
-      <div class="column">
-        <h2 class="title is-3">Matting</h2>
-        <div class="columns is-centered">
-          <div class="column content">
-            <p>
-              As a byproduct of our method, we can also solve the matting problem by ignoring
-              samples that fall outside of a bounding box during rendering.
-            </p>
-            <video id="matting-video" controls playsinline height="100%">
-              <source src="./static/videos/matting.mp4"
-                      type="video/mp4">
+        <!-- 宣传视频 -->
+        <div class="video-wrapper" data-aos="zoom-in" data-aos-duration="1200" data-aos-delay="200">
+            <video controls poster="static/images/video_poster.jpg">
+                <source src="static/videos/demo.mp4" type="video/mp4">
+                Your browser does not support the video tag.
             </video>
-          </div>
-
         </div>
-      </div>
-    </div>
-    <!--/ Matting. -->
+    </section>
 
-    <!-- Animation. -->
-    <div class="columns is-centered">
-      <div class="column is-full-width">
-        <h2 class="title is-3">Animation</h2>
-
-        <!-- Interpolating. -->
-        <h3 class="title is-4">Interpolating states</h3>
-        <div class="content has-text-justified">
-          <p>
-            We can also animate the scene by interpolating the deformation latent codes of two input
-            frames. Use the slider here to linearly interpolate between the left frame and the right
-            frame.
-          </p>
-        </div>
-        <div class="columns is-vcentered interpolation-panel">
-          <div class="column is-3 has-text-centered">
-            <img src="./static/images/interpolate_start.jpg"
-                 class="interpolation-image"
-                 alt="Interpolate start reference image."/>
-            <p>Start Frame</p>
-          </div>
-          <div class="column interpolation-video-column">
-            <div id="interpolation-image-wrapper">
-              Loading...
+    <!-- ================= ABSTRACT & 效果对比图 ================= -->
+    <section class="section bg-alt" data-aos="fade-up">
+        <div class="container">
+            <h2 class="section-title">Abstract</h2>
+            
+            <div class="content-grid" style="align-items: center;">
+                <!-- 左列：正式的学术摘要 -->
+                <div class="glass-card" style="font-size: 1.05rem;">
+                    <p style="text-align: justify; margin-bottom: 15px;">
+                        Continual learning in multimodal large language models (MLLMs) aims to sequentially acquire knowledge while mitigating <strong class="highlight-text">catastrophic forgetting</strong>, yet existing methods face inherent limitations: architecture-based approaches incur additional computational overhead and often generalize poorly to new tasks, rehearsal-based methods rely on storing historical data, raising privacy and storage concerns, and conventional regularization-based strategies alone are insufficient to fully prevent parameter interference. We propose <strong>Octopus</strong>, a two-stage continual learning framework based on <strong class="highlight-text">History-Free Gradient Orthogonalization (HiFGO)</strong>, which enforces gradient-level orthogonality without historical task data. Our proposed two-stage finetuning strategy decouples task adaptation from regularization, achieving a principled balance between plasticity and stability. Experiments on UCIT show that <strong>Octopus</strong> establishes state-of-the-art performance, surpassing prior SOTA by 2.14% and 6.82% in terms of <em>Avg</em> and <em>Last</em>.
+                        
+                        <!-- Continual learning in Multimodal Large Language Models (MLLMs) aims to sequentially acquire knowledge for new vision-language tasks while preventing <strong class="highlight-text">catastrophic forgetting</strong>. Traditional methods face a critical dilemma: architecture-based approaches endlessly increase parameters resulting in computational overhead, while rehearsal-based methods rely heavily on historical data, which raises privacy concerns and storage expenses.  -->
+                    <!-- </p> -->
+                    <!-- <p style="text-align: justify;"> -->
+                        <!-- To address these limitations, we propose <strong>Octopus</strong>, a novel continual learning framework based on <span class="highlight-text">History-Free Gradient Orthogonalization (HiFGO)</span>. By mathematically leveraging <em>Gradients of Previous parameters Within Current data (GPWC)</em> as an accurate proxy, Octopus efficiently identifies and protects sensitive optimization manifolds of older tasks without requiring any historical data. Combined with a customized two-stage finetuning strategy, Octopus elegantly balances plasticity and stability. Extensive experiments on the UCIT benchmark demonstrate that Octopus achieves state-of-the-art performance, surpassing even rehearsal-based baselines. -->
+                    </p>
+                </div>
+                <!-- 右列：雷达图 -->
+                <div>
+                    <figure style="margin: 0;">
+                        <img src="static/images/fig1.png" alt="Performance Radar Chart on UCIT" class="img-fluid" style="background:#fff;">
+                        <p class="caption">Figure 1. Performance comparison between <strong>Octopus</strong> (ours) and existing approaches on UCIT in terms of <em>Last</em>. Results demonstrate that Octopus establishes a new SOTA performance and outperforms all competing methods by a substantial margin.</p>
+                    </figure>
+                </div>
             </div>
-            <input class="slider is-fullwidth is-large is-info"
-                   id="interpolation-slider"
-                   step="1" min="0" max="100" value="0" type="range">
-          </div>
-          <div class="column is-3 has-text-centered">
-            <img src="./static/images/interpolate_end.jpg"
-                 class="interpolation-image"
-                 alt="Interpolation end reference image."/>
-            <p class="is-bold">End Frame</p>
-          </div>
         </div>
-        <br/>
-        <!--/ Interpolating. -->
+    </section>
 
-        <!-- Re-rendering. -->
-        <h3 class="title is-4">Re-rendering the input video</h3>
-        <div class="content has-text-justified">
-          <p>
-            Using <span class="dnerf">Nerfies</span>, you can re-render a video from a novel
-            viewpoint such as a stabilized camera by playing back the training deformations.
-          </p>
+    <!-- ================= Overall Architecture ================= -->
+    <section class="section container" data-aos="fade-up">
+        <h2 class="section-title">Overall Architecture</h2>
+        
+        <div style="text-align: center; max-width: 900px; margin: 0 auto;">
+            <p style="color: var(--text-muted); margin-bottom: 30px; font-size: 1.1rem;">
+                The Octopus pipeline is thoughtfully designed to mitigate gradient-level interference across arbitrary task sequences, achieving parameter decoupling purely through optimization geometry.
+            </p>
+            <img src="static/images/fig2.png" class="img-fluid" alt="Octopus Pipeline Diagram">
+            <p class="caption mt-3">Figure 2. Overall pipeline for continual learning in MLLMs (<em>left</em>) and architecture of our proposed <strong>Octopus</strong> (<em>right</em>). In the context of continual learning, MLLMs are required to sequentially learn multiple tasks while overcoming the challenge of catastrophic forgetting caused by non-stationary data distributions. To address this, we propose Octopus, which adopts a two-stage fine-tuning paradigm. In the first stage, MLLM learns task-specific knowledge without constraints, enabling full adaptation to current task. In the second stage, we apply History-Free Gradient Orthogonalization (HiFGO) to mitigate parameter interference, while simultaneously constraining the parameter updates within an optimal solution space, thereby maintaining a effective balanced trade-off between plasticity and stability.</p>
         </div>
-        <div class="content has-text-centered">
-          <video id="replay-video"
-                 controls
-                 muted
-                 preload
-                 playsinline
-                 width="75%">
-            <source src="./static/videos/replay.mp4"
-                    type="video/mp4">
-          </video>
+    </section>
+
+    <!-- ================= Why GPWC works? ================= -->
+    <section class="section bg-alt" data-aos="fade-up">
+        <div class="container">
+            <h2 class="section-title">Why GPWC Works?</h2>
+            
+            <div class="glass-card">
+                <p>
+                    The fundamental insight of HiFGO lies in calculating the gradient sensitivity of historical tasks to steer current optimization. Under strict privacy constraints without old data, we propose <strong>GPWC (Gradients of Previous parameters Within Current data distribution)</strong>.
+                </p>
+                <blockquote>
+                    Theoretical Proof: GPWC is mathematically equivalent to the projection of the previous task's Hessian matrix onto the tangent space of the current task's data manifold.
+                </blockquote>
+                
+                <div class="multi-img-grid mt-4">
+                    <div>
+                        <img src="static/images/fig3.png" class="img-fluid" alt="HiFGO validity analysis">
+                        <p class="caption">Figure 3. Validity of the HiFGO constraint. Utilizing GPWC successfully restores prior task performance compared to standard sequential fine-tuning.</p>
+                    </div>
+                    <div>
+                        <img src="static/images/fig7.png" class="img-fluid" alt="Hessian Quadratic Form">
+                        <p class="caption">Figure 4. Comparison of the quadratic form of parameter increment. GPWC guides model updates precisely into low-curvature flat regions of the old tasks.</p>
+                    </div>
+                </div>
+            </div>
         </div>
-        <!--/ Re-rendering. -->
+    </section>
 
-      </div>
-    </div>
-    <!--/ Animation. -->
+    <!-- ================= Two-Stage Finetuning ================= -->
+    <section class="section container" data-aos="fade-up">
+        <h2 class="section-title">Two-Stage Finetuning</h2>
 
-
-    <!-- Concurrent Work. -->
-    <div class="columns is-centered">
-      <div class="column is-full-width">
-        <h2 class="title is-3">Related Links</h2>
-
-        <div class="content has-text-justified">
-          <p>
-            There's a lot of excellent work that was introduced around the same time as ours.
-          </p>
-          <p>
-            <a href="https://arxiv.org/abs/2104.09125">Progressive Encoding for Neural Optimization</a> introduces an idea similar to our windowed position encoding for coarse-to-fine optimization.
-          </p>
-          <p>
-            <a href="https://www.albertpumarola.com/research/D-NeRF/index.html">D-NeRF</a> and <a href="https://gvv.mpi-inf.mpg.de/projects/nonrigid_nerf/">NR-NeRF</a>
-            both use deformation fields to model non-rigid scenes.
-          </p>
-          <p>
-            Some works model videos with a NeRF by directly modulating the density, such as <a href="https://video-nerf.github.io/">Video-NeRF</a>, <a href="https://www.cs.cornell.edu/~zl548/NSFF/">NSFF</a>, and <a href="https://neural-3d-video.github.io/">DyNeRF</a>
-          </p>
-          <p>
-            There are probably many more by the time you are reading this. Check out <a href="https://dellaert.github.io/NeRF/">Frank Dellart's survey on recent NeRF papers</a>, and <a href="https://github.com/yenchenlin/awesome-NeRF">Yen-Chen Lin's curated list of NeRF papers</a>.
-          </p>
+        <div class="content-grid" style="align-items: center;">
+            <!-- 左侧：文字说明 -->
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div class="glass-card" style="border-left: 4px solid var(--primary-color);">
+                    <h3 style="color: var(--primary-color); margin-top: 0;"><i class="fas fa-bolt"></i> Stage 1: Unconstrained Adaptation</h3>
+                    <p style="margin-bottom: 0;">
+                        Inspired by simulated annealing, the model first freely finetunes on the new task data. This phase temporarily ignores stability to maximize <b>plasticity</b>, allowing the model to quickly absorb new feature representations and plunge into the local minimum optimal for the new distributions.
+                    </p>
+                </div>
+                <div class="glass-card" style="border-left: 4px solid var(--primary-light);">
+                    <h3 style="color: var(--primary-light); margin-top: 0;"><i class="fas fa-lock"></i> Stage 2: HiFGO Constraints</h3>
+                    <p style="margin-bottom: 0;">
+                        In the second stage, we activate the HiFGO constraint. This regularized tuning efficiently "pulls back" parameters onto a safe subspace that minimizes interference with the previously learned knowledge, acting as a crucial consolidation step for <b>stability</b>.
+                    </p>
+                </div>
+            </div>
+            <!-- 右侧：伪代码 -->
+            <div>
+                <img src="static/images/algo1.png" class="img-fluid" alt="Octopus Algorithm Pseudo-code" style="box-shadow: var(--shadow-soft);">
+                <p class="caption">Algorithm 1. The formalized execution flow of Two-Stage Finetuning.</p>
+            </div>
         </div>
-      </div>
-    </div>
-    <!--/ Concurrent Work. -->
+    </section>
 
-  </div>
-</section>
+    <!-- ================= Experimental Results ================= -->
+    <section class="section bg-alt" data-aos="fade-up">
+        <div class="container">
+            <h2 class="section-title">Experimental Results</h2>
+            
+            <!-- 整行占据 1：主对比表格 SOTA -->
+            <div class="glass-card" style="margin-bottom: 40px;">
+                <h3 style="margin-top: 0;">Comprehensive Performance Comparison</h3>
+                <p style="color: var(--text-muted); font-size: 0.95rem;">
+                    Comparison with various methods on UCIT in terms of <em>Avg</em> and <em>Last</em>. The best and second methods are labeled with <strong>bold</strong> and <u>underline</u> styles. <em>Zero-shot</em> evaluates pretrained model without finetuning. <em>Multi-task</em> jointly finetunes model across all datasets, whereas <em>Sequential Finetune</em> adapts only one LoRA module sequentially to all tasks. These settings provide an empirical characterization of the lower bound, upper bound, and baseline for continual learning methods.
+                </p>
+                <img src="static/images/tab1.png" class="img-fluid mt-3" alt="Main Benchmark Table">
+            </div>
 
+            <!-- 整行占据 2：BWT 分析 -->
+            <div class="glass-card" style="margin-bottom: 40px;">
+                <h3 style="margin-top: 0;">Backward Transfer (BWT) Analysis</h3>
+                <p style="color: var(--text-muted); font-size: 0.95rem;">
+                    Effectiveness of History-Free Gradient Orthogonalization. We compare the performance of three orthogonalization strategies (orthogonal to param., <strong>GPWC</strong> or both) and that of two type of gradients (<strong>GPWC</strong> and gradients of prev. param. on prev. task). Our method is emphasized in bold for clarity.
+                    A critical indicator of continual learning capability is Backward Transfer. Instead of suffering from negative transfer, Octopus effectively extracts generalized representations from new tasks that are highly compatible with historical knowledge, yielding an exceptional positive backward transfer (BWT = +0.41).
+                </p>
+                <img src="static/images/tab2.png" class="img-fluid mt-3" alt="Backward Transfer Chart" style="max-height: 400px; object-fit: contain; margin: 0 auto;">
+            </div>
 
-<section class="section" id="BibTeX">
-  <div class="container is-max-desktop content">
-    <h2 class="title">BibTeX</h2>
-    <pre><code>@article{park2021nerfies,
-  author    = {Park, Keunhong and Sinha, Utkarsh and Barron, Jonathan T. and Bouaziz, Sofien and Goldman, Dan B and Seitz, Steven M. and Martin-Brualla, Ricardo},
-  title     = {Nerfies: Deformable Neural Radiance Fields},
-  journal   = {ICCV},
-  year      = {2021},
-}</code></pre>
-  </div>
-</section>
+            <!-- 分两列占据 3：鲁棒性 vs 效率 -->
+            <div class="content-grid" style="margin-bottom: 0;">
+                <div class="glass-card">
+                    <h3 style="margin-top: 0; font-size: 1.25rem;">Robustness and Hyperparameter Sensitivity</h3>
+                    <p style="font-size: 0.9rem; color: var(--text-muted);">
+                        Sensitivity analyses confirm that Octopus maintains consistently optimal performance across randomized non-stationary task orders.
+                    </p>
+                    <img src="static/images/tab5.png" class="img-fluid mt-3" alt="Hyperparameter Sensitivity">
+                </div>
 
-
-<footer class="footer">
-  <div class="container">
-    <div class="content has-text-centered">
-      <a class="icon-link"
-         href="./static/videos/nerfies_paper.pdf">
-        <i class="fas fa-file-pdf"></i>
-      </a>
-      <a class="icon-link" href="https://github.com/keunhong" class="external-link" disabled>
-        <i class="fab fa-github"></i>
-      </a>
-    </div>
-    <div class="columns is-centered">
-      <div class="column is-8">
-        <div class="content">
-          <p>
-            This website is licensed under a <a rel="license"
-                                                href="http://creativecommons.org/licenses/by-sa/4.0/">Creative
-            Commons Attribution-ShareAlike 4.0 International License</a>.
-          </p>
-          <p>
-            This means you are free to borrow the <a
-              href="https://github.com/nerfies/nerfies.github.io">source code</a> of this website,
-            we just ask that you link back to this page in the footer.
-            Please remember to remove the analytics code included in the header of the website which
-            you do not want on your website.
-          </p>
+                <div class="glass-card">
+                    <h3 style="margin-top: 0; font-size: 1.25rem;">Inference Efficiency</h3>
+                    <p style="font-size: 0.9rem; color: var(--text-muted);">
+                        Compared to MoE-based strategies, Octopus utilizes a unified structure, introducing zero additional computational footprint during the inference phase.
+                    </p>
+                    <img src="static/images/fig11.png" class="img-fluid mt-3" alt="Inference Parameters Comparison">
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  </div>
-</footer>
+    </section>
 
+    <!-- ================= Example Analysis (Tabs Layout) ================= -->
+    <section class="section container" data-aos="fade-up">
+        <h2 class="section-title">Example Analysis</h2>
+        
+        <div class="tabs-wrapper">
+            <!-- Tab Buttons -->
+            <div class="tab-buttons">
+                <button class="tab-button active" onclick="openExample(event, 'VizWiz')">VizWiz (Captioning)</button>
+                <button class="tab-button" onclick="openExample(event, 'ScienceQA')">ImageNet-R (VQA)</button>
+                <button class="tab-button" onclick="openExample(event, 'IconQA')">IconQA (VQA)</button>
+                <button class="tab-button" onclick="openExample(event, 'CLEVR')">CLEVR-Math (VQA)</button>
+            </div>
+
+            <!-- Tab Content 1: VizWiz -->
+            <div id="VizWiz" class="tab-content active">
+                <h3>Image Captioning: VizWiz</h3>
+                <!-- <p>Qualitative comparison demonstrating that baseline methods hallucinate, whereas Octopus retains accurate visual reasoning semantics.</p> -->
+                <img src="static/images/visual-4.png" class="img-fluid img-no-border" alt="VizWiz Example">
+            </div>
+
+            <!-- Tab Content 2: ImageNet-R -->
+            <div id="ScienceQA" class="tab-content">
+                <h3>Visual Question Answering: ImageNet-R</h3>
+                <!-- <p>Despite long sequence learning, Octopus successfully recalls fundamental scientific knowledge to answer correctly.</p> -->
+                <img src="static/images/visual-1.png" class="img-fluid img-no-border" alt="ScienceQA Example">
+            </div>
+
+            <!-- Tab Content 3: IconQA -->
+            <div id="IconQA" class="tab-content">
+                <h3>Visual Question Answering: IconQA</h3>
+                <!-- <p>The model perfectly preserves its capability to comprehend abstract and symbolic visual elements without interference.</p> -->
+                <img src="static/images/visual-2.png" class="img-fluid img-no-border" alt="IconQA Example">
+            </div>
+
+            <!-- Tab Content 4: CLEVR-Math -->
+            <div id="CLEVR" class="tab-content">
+                <h3>Visual Question Answering: CLEVR-Math</h3>
+                <!-- <p>Octopus rigorously maintains discrete numerical reasoning abilities across prolonged sequential finetuning.</p> -->
+                <img src="static/images/visual-3.png" class="img-fluid img-no-border" alt="CLEVR-Math Example">
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= Citation ================= -->
+    <section class="section container" data-aos="fade-up" style="padding-bottom: 100px;">
+        <h2 class="section-title">Citation</h2>
+        
+        <div class="terminal">
+            <div class="terminal-header">
+                <div class="dot red"></div>
+                <div class="dot yellow"></div>
+                <div class="dot green"></div>
+                <span style="color: #9ca3af; font-size: 0.85rem; margin-left: 10px;">BibTeX</span>
+            </div>
+            <div class="terminal-body" id="bibtex-content">@inproceedings{liu2026octopus,
+    title     = {Octopus: History-Free Gradient Orthogonalization for Continual Learning in Multimodal Large Language Models},
+    author    = {Liu, Yuehao and Guan, Shanyan and Zhang, Weijia and Shang, Xuanming and Ge, Yanhao and Li, Wei and Ma, Chao},
+    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+    year      = {2026}
+}</div>
+        </div>
+        <div style="text-align: center; margin-top: 20px;">
+            <button class="btn" style="margin: 0 auto; padding: 8px 20px; font-size: 0.9rem; background: #ffffff;" onclick="copyBib()">
+                <i class="far fa-copy"></i> Copy to Clipboard
+            </button>
+        </div>
+    </section>
+
+    <!-- ================= SCRIPTS ================= -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        // 初始化 AOS 滚动动画
+        AOS.init({
+            once: true,
+            offset: 60,
+            duration: 800,
+        });
+
+        // 选项卡 (Tabs) 切换逻辑
+        function openExample(evt, exampleName) {
+            // 隐藏所有的 tab 内容
+            const tabContents = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.remove("active");
+            }
+            
+            // 移除所有按钮的 active 状态
+            const tabButtons = document.getElementsByClassName("tab-button");
+            for (let i = 0; i < tabButtons.length; i++) {
+                tabButtons[i].classList.remove("active");
+            }
+            
+            // 显示当前点击的内容，并为其按钮赋予 active 状态
+            document.getElementById(exampleName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+        }
+
+        // 复制 BibTeX 逻辑
+        function copyBib() {
+            const content = document.getElementById("bibtex-content").innerText;
+            navigator.clipboard.writeText(content).then(() => {
+                const btn = document.querySelector('button[onclick="copyBib()"]');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                btn.style.color = "#e07a5f";
+                btn.style.borderColor = "#e07a5f";
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.color = "";
+                    btn.style.borderColor = "";
+                }, 2000);
+            });
+        }
+    </script>
 </body>
 </html>
